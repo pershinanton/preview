@@ -1,0 +1,39 @@
+class AuthorizationInteractor(
+    private val repository: AuthorizationRepository
+) {
+    val user: User
+        get() = repository.user
+    val lastOrder: LastOrder?
+        get() = repository.lastOrder
+    val lastPcrApplication: LastPcrApplication?
+        get() = repository.lastPcrApplication
+    val pcrApplications: List<LastPcrApplication?>?
+        get() = repository.pcrApplications
+
+    suspend fun getAccount() = repository.getAccount()
+
+    suspend fun updateSettings(allowSms: Boolean, allowEmail: Boolean) =
+        repository.updateSettings(allowSms, allowEmail)
+
+    suspend fun updateData(
+        fullName: String?,
+        email: String?,
+        city: String?,
+        gender: String?,
+        height: Int?,
+        weight: Int?,
+        birthday: Date?
+    ) =
+        repository.updateData(fullName, email, city, gender, height, weight, birthday)
+
+    suspend fun updateCity(city: String) = repository.updateCity(city)
+
+    suspend fun updatePushToken(token: String) = repository.updatePushToken(token)
+
+    suspend fun sendSmsCode(phone: String, dev: Boolean, appVersion: String) =
+        repository.sendSmsCode(phone, dev, appVersion)
+
+    suspend fun logIn(phone: String, code: String, dev: Boolean, appVersion: String) = repository.logIn(phone, code, dev, appVersion)
+
+    fun logOut() = repository.logOut()
+}
