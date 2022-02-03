@@ -1,0 +1,146 @@
+@AndroidEntryPoint
+class ProfileFragment :
+    BaseFragment(
+        R.layout.fragment_profile
+    ), ProfileView, BackButtonListener {
+
+    private val binding by viewBinding(FragmentProfileBinding::bind)
+
+    companion object {
+        fun getNewInstance() =
+            ProfileFragment()
+    }
+
+    @Inject
+    lateinit var routerMain: Router
+
+    private var logoutDialog: BaseDialog? = null
+
+    private val adapter = GroupieAdapter()
+
+    private val presenter by moxyPresenter { ProfilePresenter(requireActivity().applicationContext) }
+
+    override fun initDecoration(view: View) {
+        view.toolbar.menu.clear()
+        view.toolbar.navigationIcon =
+            ContextCompat.getDrawable(requireContext(), R.drawable.ic_cross)
+        view.toolbar.setNavigationOnClickListener { requireActivity().onBackPressed() }
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+        super.onViewCreated(view, savedInstanceState)
+        initSwipeRefreshLayout()
+        initRecyclerView()
+    }
+
+    private fun initSwipeRefreshLayout() = with(binding) {
+        swipeRefreshLayout.isEnabled = false
+        swipeRefreshLayout.setColorSchemeColors(
+            ContextCompat.getColor(
+                requireActivity(),
+                R.color.colorAccent
+            )
+        )
+        swipeRefreshLayout.setOnRefreshListener {
+            presenter.get(refreshing = true)
+        }
+    }
+
+    private fun initRecyclerView() = with(binding) {
+        recyclerView.setHasFixedSize(true)
+        recyclerView.apply {
+            layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+            adapter = this@ProfileFragment.adapter
+            addItemDecoration(
+                ProfileItemDecoration(
+                    requireActivity(),
+                    this@ProfileFragment.adapter
+                )
+            )
+        }
+        adapter.setOnItemClickListener { item, _ ->
+            if (item is ProfileLogoutItem) {
+                showLogoutDialog()
+            } else if (item is ProfileOrdersArchiveItem) {
+                navigateToOrdersArchive()
+            }
+        }
+    }
+
+    private fun showLogoutDialog() {
+        if (logoutDialog != null) return
+        logoutDialog = PositiveNegativeDialog(
+            context = requireActivity(),
+            title = getString(R.string.logout),
+            message = getString(R.string.logout_question),
+            positiveTitle = getString(R.string.confirm),
+            negativeTitle = getString(R.string.cancel),
+            cancelable = true,
+            object : PositiveNegativeDialog.Listener() {
+                override fun onClickPositive(dialog: PositiveNegativeDialog) {
+                    presenter.logout()
+                }
+
+                override fun onDismiss(dialog: PositiveNegativeDialog) {
+                    dialog.release()
+                    logoutDialog = null
+                }
+
+            }
+        ).show()
+    }
+
+    private fun navigateToOrdersArchive() {
+        routerMain.navigateTo(Screens.ordersArchiveCalendarScreen())
+    }
+
+    override fun onComplete(model: UserDetailedModel, cache: Boolean) {
+        adapter.update(createItemList(model))
+        binding.recyclerView.invalidateItemDecorations()
+    }
+
+    private fun createItemList(model: UserDetailedModel): List<Item> {
+        val items = ArrayList<Item>()
+        items.add(
+            ProfileHeaderItem(
+                model
+            )
+        )
+        items.add(PaddingDefaultStubItem())
+        items.add(ProfileOrdersArchiveItem())
+        items.add(PaddingDefaultStubItem())
+        items.add(ProfileLogoutItem())
+        items.add(PaddingDefaultStubItem())
+        return items
+    }
+
+    override fun setLoading(loading: Boolean, refreshing: Boolean) = with(binding) {
+        loadingContainer.visibility = if (loading) View.VISIBLE else View.GONE
+        contentContainer.visibility = if (loading) View.GONE else View.VISIBLE
+        swipeRefreshLayout.isRefreshing = refreshing
+    }
+
+    override fun onException(message: String?, exit: Boolean) {
+        if (message != null) toastShort(message)
+        else toastShort(R.string.error_unknown)
+        if (exit) routerMain.exit()
+    }
+
+    override fun onException(@StringRes messageResId: Int?, exit: Boolean) {
+        if (messageResId != null) toastShort(messageResId)
+        else toastShort(R.string.error_unknown)
+        if (exit) routerMain.exit()
+    }
+
+    override fun onDestroyView() {
+        logoutDialog?.dismiss()
+        logoutDialog = null
+        super.onDestroyView()
+    }
+
+
+    override fun onBackPressed(): Boolean {
+        routerMain.exit()
+        return true
+    }
