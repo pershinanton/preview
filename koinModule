@@ -1,0 +1,46 @@
+val jsonModule = module {
+    single {
+        GsonBuilder().create()
+    }
+}
+
+val dataModule = module {
+    single {
+        Room.databaseBuilder(get(), EmpDB::class.java, "employees.db").build()
+    }
+    single {
+        val db: EmpDB = get()
+        db.empDao()
+    }
+    single {
+        val db: EmpDB = get()
+        db.epmSpecDao()
+    }
+}
+
+val networkModule = module {
+    single {
+        NetworkFactory.okHttpClient(null, null, 10000)
+    }
+
+    single {
+        NetworkFactory.retrofit(get(), get(), EmployeesApi.BASE_URL)
+    }
+
+    single {
+        NetworkFactory.employeesApiClient(get())
+    }
+}
+
+val useCaseModule = module {
+    single {
+        EmployeesUseCase(
+            get(),
+            get()
+        )
+    }
+    single<EmployeesRepository> { EmployeesRepositoryInetImpl(get(),get(),get()) }
+}
+val repositoryModule = module {
+    single { EmployeesRepositoryInetImpl(get(),get(),get()) }
+}
