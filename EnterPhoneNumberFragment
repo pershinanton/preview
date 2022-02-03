@@ -1,0 +1,75 @@
+class EnterPhoneNumberFragment : BaseFragment(
+    layoutResId = R.layout.fragment_enter_phone_number,
+    hideKeyboardOnStart = false,
+    hideKeyboardOnStop = false
+), BackButtonListener {
+
+    private val vm: EnterPhoneNumberVM by viewModel()
+    private val appsflyer :AppsFlyerAnalytics by inject()
+
+    override fun getViewModel() = vm
+
+    private var phoneEditTextController: PhoneEditTextController? = null
+
+    override fun onViewCreatedFirstTime(view: View, savedInstanceState: Bundle?) {}
+
+    override fun initDecoration(view: View) {}
+
+    override fun onFragmentShow() {}
+
+    override fun onFragmentHide() {}
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        super.onViewCreated(view, savedInstanceState)
+        appsflyer.loginOpened()
+        phoneEditTextController = PhoneEditTextController(phoneNumberEditText)
+        phoneEditTextController!!.apply()
+        setObservers()
+        setListeners()
+        phoneNumberEditText.postSmartTouch()
+    }
+
+    private fun setListeners() {
+        phoneNumberEditText.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE && phoneEditTextController!!.isComplete) {
+                if (!vm.sendCode(phoneEditTextController!!.cleanValue)) toastCenter(R.string.please_wait)
+            }
+            false
+        }
+        phoneNumberEditText.doAfterTextChanged { checkBtnEnable() }
+        btnNext.setOnClickListener {
+            if (!vm.sendCode(phoneEditTextController!!.cleanValue)) toastCenter(R.string.please_wait)
+        }
+    }
+
+    private fun setObservers() {
+        val inProgressObserver = Observer<Boolean> {
+            phoneNumberEditText.isEnabled = !it
+            btnNext.isEnabled = !it
+        }
+        vm.inProgress.observe(viewLifecycleOwner, inProgressObserver)
+        vm.inProgressSilent.observe(viewLifecycleOwner, inProgressObserver)
+        vm.success.nonNullObserve(this) {
+            view?.postSmart {
+                findNavController().navigate(
+                    EnterPhoneNumberFragmentDirections.actionEnterPhoneNumberFragmentToEnterSmsCodeFragment(
+                        phoneEditTextController!!.cleanValue
+                    )
+                )
+            }
+        }
+    }
+
+    private fun checkBtnEnable() {
+        btnNext.isEnabled = phoneEditTextController!!.isComplete
+    }
+
+    override fun onDestroyView() {
+        phoneEditTextController?.apply {
+            release()
+            phoneEditTextController = null
+        }
+        super.onDestroyView()
+    }
+}
