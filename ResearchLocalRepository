@@ -1,0 +1,11 @@
+import io.reactivex.rxjava3.core.Flowable
+import plus.lifetime.nurse.model.ResearchModel
+
+interface ResearchLocalRepository {
+
+    fun insertOrUpdate(model: ResearchModel): Long
+
+    fun getAll(): Flowable<List<ResearchModel>>
+
+    fun deleteAll()
+}
