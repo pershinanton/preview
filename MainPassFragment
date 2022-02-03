@@ -1,0 +1,90 @@
+
+class MainPassFragment : BaseFragment<FragmentMainPassBinding>(
+    koinModules = listOf(passFragment),
+    inflate = FragmentMainPassBinding::inflate
+) {
+    private val vm: PassVM by sharedViewModel()
+    override fun getViewModel(): BaseViewModel = vm
+    private val mPagerAdapter: PassPagerAdapter by lazy {
+        PassPagerAdapter(
+            childFragmentManager,
+            lifecycle
+        )
+    }
+
+    override fun onViewCreatedFirstTime(view: View, savedInstanceState: Bundle?) {
+        vm.loadPassObjects()
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        initPager()
+        getDbEntity()
+    }
+
+    private fun initPager() = with(binding) {
+        mPagerAdapter.setFragments(
+            arrayListOf(
+                AutoFragment(),
+                HumanFragment(),
+                HistoryFragment()
+            )
+        )
+        pager.adapter = mPagerAdapter
+        pager.offscreenPageLimit = 3
+        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab?) {
+                pager.currentItem = tab!!.position
+                tab.view.alpha = 1F
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) {
+                tab!!.view.alpha = 0.5f
+            }
+
+            override fun onTabReselected(tab: TabLayout.Tab?) {
+
+            }
+        })
+        TabLayoutMediator(tabLayout, pager) { tab, position ->
+            when (position) {
+                0 -> {
+                    with(tab) {
+                        view.alpha = 1F
+                        text = requireContext().getText(R.string.pager_auto)
+                    }
+                }
+                1 -> {
+                    with(tab) {
+                        view.alpha = 0.5F
+                        text = requireContext().getText(R.string.pager_human)
+                    }
+                }
+                2 -> {
+                    with(tab) {
+                        view.alpha = 0.5F
+                        text = requireContext().getText(R.string.pager_history)
+                    }
+                }
+            }
+        }.attach()
+    }
+
+    override fun onFragmentShow() {
+
+    }
+
+    override fun onFragmentHide() {
+
+    }
+
+    private fun getDbEntity() {
+        lifecycleScope.launchWhenStarted {
+            vm.db.getAllDrafts().flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                .onEach {
+                    vm.setDrafts(it)
+                }
+                .launchIn(this)
+        }
+    }
+}
