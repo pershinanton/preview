@@ -1,0 +1,217 @@
+class AnalysisOrderInteractor(private val repository: AnalysisOrderRepository) {
+
+    suspend fun getAnalysisOrderCart(
+        region: String
+    ) = repository.getAnalysisOrderCart(
+        region
+    )
+
+    suspend fun recallMe(
+        name: String,
+        phone: String,
+        searchQuery: String
+    ) = repository.recallMe(
+        name,
+        phone,
+        searchQuery
+    )
+
+    suspend fun checkPromoCode(
+        promoCode: String,
+        productsCodes: List<String>,
+        arrivalCost: Int?,
+        deliveryResultsCost: Int?,
+        regionSpb: Boolean
+    ) = repository.checkPromoCode(
+        CheckPromoCodeRequestEntity(
+            promoCode,
+            productsCodes,
+            arrivalCost,
+            deliveryResultsCost,
+            regionSpb
+        )
+     )
+
+    suspend fun orders(
+        name: String,
+        phone: String,
+        datetime: Date,
+        addressDescription: AddressDescriptionModel,
+        analysisProductsCodes: List<String>,
+        analysisProductsGiftsCodes: List<String>?,
+        deliveryResults: Boolean,
+        generatePayment: Boolean,
+        email: String?,
+        comment: String?,
+        birthDate: Date,
+        promoCode: String?,
+        arrivalCost: Int?,
+        deliveryResultsCost: Int?,
+        customers: List<CustomerPcrFormModel>?,
+        appVersion: String,
+        regionSpb: Boolean
+    ): Result<AnalysisOrderPostEntity> =
+        repository.orders(
+            OrderAnalyzesForm(
+                name = name,
+                phone = phone,
+                datetime = datetime,
+                addressDescription = addressDescription,
+                analysisProductsCodes = analysisProductsCodes,
+                analysisProductsGiftsCodes = analysisProductsGiftsCodes,
+                deliveryResults = deliveryResults,
+                generatePayment = generatePayment,
+                email = email,
+                comment = comment,
+                birthDate = birthDate,
+                promoCode = promoCode,
+                customers = customers,
+                arrivalCost = arrivalCost,
+                deliveryResultsCost = deliveryResultsCost,
+                regionSpb = regionSpb
+            ),
+            appVersion = appVersion
+        )
+
+    suspend fun orders(
+        orderAnalyzesForm: OrderAnalyzesForm,
+        appVersion: String
+    ): Result<AnalysisOrderPostEntity> =
+        repository.orders(
+            orderAnalyzesForm,
+            appVersion
+        )
+
+    suspend fun orderById(
+        orderId: Long,
+        body: OrderAnalyzesForm,
+        appVersion: String,
+        regionSpb: Boolean
+    ): Result<AnalysisOrderPostEntity> =
+        repository.orderById(
+            orderId,
+            body,
+            appVersion
+        )
+
+    @Suppress("SimpleDateFormat")
+    suspend fun pcrApplication(
+        orderId: Long?,
+        firstName: String,
+        secondName: String,
+        patronymic: String,
+        sex: Sex,
+        birthDate: Date,
+        passportAddress: String,
+        passportNumber: String,
+        passportDepartment: String,
+        passportDate: Date,
+        phone: String,
+        address: String?,
+        resultsEng: Boolean,
+        firstNameEng: String?,
+        secondNameEng: String?,
+        delivery: Date,
+        internationalPassportNumber: String?,
+        workPlace: String?,
+        workAddress: String?,
+        workPosition: String?,
+        documentType: DocumentType?,
+        documentTypeInternational: DocumentTypeInternational?,
+        snils: String?,
+        regionSpb: Boolean
+    ): Result<Boolean> =
+        repository.pcrApplication(
+            PcrFormModel(
+                orderId = orderId,
+                firstName = firstName,
+                secondName = secondName,
+                patronymic = patronymic,
+                sex = sex.map(),
+                birthDate = birthDate,
+                passportAddress = passportAddress,
+                passportNumber = passportNumber,
+                passportDepartment = passportDepartment,
+                passportDate = passportDate,
+                delivery = delivery,
+                phone = phone,
+                address = address,
+                resultsEng = resultsEng,
+                firstNameEng = firstNameEng,
+                secondNameEng = secondNameEng,
+                internationalPassportNumber = internationalPassportNumber,
+                workPlace = workPlace,
+                workAddress = workAddress,
+                workPosition = workPosition,
+                documentType = documentType?.map(),
+                documentTypeInternational = documentTypeInternational?.map(),
+                snils = snils,
+                regionSpb = regionSpb
+            )
+        )
+
+    suspend fun supportCallback(
+        name: String,
+        phone: String,
+        comment: String
+    ) = repository.supportCallback(
+        SupportCallback(
+            name = name,
+            phone = phone,
+            comment = comment
+        )
+    )
+
+    suspend fun sendFeedback(
+        orderId: Long,
+        comment: String
+    ) = repository.sendFeedback(
+        orderId,comment
+    )
+
+    suspend fun getStatusOfLastPayment() = repository.getStatusOfLastPayment()
+
+    suspend fun generatePaymentForOrder(orderId: String) =
+        repository.generatePaymentForOrder(orderId)
+
+    suspend fun standUpWaitingList() = repository.standUpWaitingList()
+
+    suspend fun getUserOrders() = repository.getUserOrders()
+
+    suspend fun getOrder(id: String) = repository.getOrder(id)
+
+    companion object {
+        enum class Sex {
+            MALE, FEMALE
+        }
+
+        enum class DocumentType {
+            PASSPORT_RUSSIAN,
+            PASSPORT_FOREIGN,
+            BIRTH_CERTIFICATE_RUSSIAN,
+            BIRTH_CERTIFICATE_FOREIGN
+        }
+
+        enum class DocumentTypeInternational {
+            PASSPORT_INTERNATIONAL_RUSSIAN,
+            PASSPORT_FOREIGN
+        }
+
+        fun Sex.map() = when (this) {
+            Sex.MALE -> PcrFormModel.Companion.Sex.MALE
+            Sex.FEMALE -> PcrFormModel.Companion.Sex.FEMALE
+        }
+
+        fun DocumentType.map() = when (this) {
+            DocumentType.PASSPORT_RUSSIAN -> PcrFormModel.Companion.DocumentType.PASSPORT_RUSSIAN
+            DocumentType.PASSPORT_FOREIGN -> PcrFormModel.Companion.DocumentType.PASSPORT
+            DocumentType.BIRTH_CERTIFICATE_RUSSIAN -> PcrFormModel.Companion.DocumentType.BIRTH_CERTIFICATE_RUSSIAN
+            DocumentType.BIRTH_CERTIFICATE_FOREIGN -> PcrFormModel.Companion.DocumentType.BIRTH_CERTIFICATE
+        }
+
+        fun DocumentTypeInternational.map() = when (this) {
+            DocumentTypeInternational.PASSPORT_INTERNATIONAL_RUSSIAN -> PcrFormModel.Companion.DocumentTypeInternational.PASSPORT_INTERNATIONAL_RUSSIAN
+            DocumentTypeInternational.PASSPORT_FOREIGN -> PcrFormModel.Companion.DocumentTypeInternational.PASSPORT_FOREIGN
+        }
+    }
+}
