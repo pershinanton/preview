@@ -1,0 +1,15 @@
+fun domain.model.AddressDescriptionModel.map() = AddressDescription(
+    id = id,
+    region = region,
+    city = city,
+    street = street,
+    building = building,
+    entrance = entrance,
+    intercom = intercom,
+    floor = floor,
+    apartment = apartment,
+    coordinates = coordinates?.map()
+)
+
+fun List<domain.model.AddressDescriptionModel>.map(): List<AddressDescription> =
+    map { it.map() }
