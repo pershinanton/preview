@@ -1,21 +1,3 @@
-
-import android.content.Context
-import com.google.gson.Gson
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.components.SingletonComponent
-import .db.AppDatabase
-import .db.converters.Converters
-import .db.dao.OrderArchiveDAO
-import .db.dao.OrderDAO
-import .db.dao.ResearchDAO
-import .db.dao.ShiftDAO
-import .db.repository.impl.*
-import javax.inject.Named
-import javax.inject.Singleton
-
 @Module
 @InstallIn(SingletonComponent::class)
 object HiltDbRepositoryModule {
