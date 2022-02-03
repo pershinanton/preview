@@ -1,0 +1,52 @@
+interface AnalysisOrderRepository {
+
+    suspend fun getAnalysisOrderCart(
+        region: String
+    ): Result<AnalysisOrderCart>
+
+    suspend fun recallMe(
+        name: String,
+        phone: String,
+        searchQuery: String
+    ): Result<SuccessModel>
+
+    suspend fun checkPromoCode(
+        body: CheckPromoCodeRequestEntity
+    ): Result<CheckPromoCodeEntity>
+
+    suspend fun orders(
+        body: OrderAnalyzesForm,
+        appVersion: String
+    ): Result<AnalysisOrderPostEntity>
+
+    suspend fun getOrder(
+        id: String
+    ): Result<Order>
+
+    suspend fun pcrApplication(
+        body: PcrFormModel
+    ): Result<Boolean>
+
+    suspend fun orderById(
+        orderId: Long,
+        body: OrderAnalyzesForm,
+        appVersion: String
+    ): Result<AnalysisOrderPostEntity>
+
+    suspend fun supportCallback(
+        body: SupportCallback
+    ): Result<SuccessModel>
+
+    suspend fun getStatusOfLastPayment(): Result<String>
+
+    suspend fun generatePaymentForOrder(orderId: String): Result<String>
+
+    suspend fun standUpWaitingList(): Result<Boolean>
+
+    suspend fun getUserOrders(): Result<List<Order>>
+
+    suspend fun sendFeedback(
+        orderId: Long,
+        comment: String
+    ): Result<SuccessModel>
+}
