@@ -1,0 +1,33 @@
+
+class OrderArchiveLocalRepositoryImpl(
+    private val dao: OrderArchiveDAO
+) : OrderArchiveLocalRepository {
+
+    override fun insertOrUpdate(month: Int, year: Int, model: OrderArchiveModel) =
+        dao.insertOrUpdate(
+            model.map(month, year)
+        )
+
+    override fun getAll(): Flowable<List<OrderArchiveModel>> = Flowable.fromCallable {
+        val query =
+            "SELECT * FROM ${OrderArchiveDAO.TABLE_NAME} ORDER BY ${OrderArchiveEntity.CREATED} ASC"
+        val simpleSQLiteQuery = SimpleSQLiteQuery(query)
+        val entityList = dao.runtimeQueryList(simpleSQLiteQuery)
+        entityList.map()
+    }
+
+    override fun getByMonthAndYear(month: Int, year: Int): Flowable<List<OrderArchiveModel>> =
+        Flowable.fromCallable {
+            val query =
+                "SELECT * FROM ${OrderArchiveDAO.TABLE_NAME} WHERE ${OrderArchiveEntity.MONTH}=$month AND ${OrderArchiveEntity.YEAR}=$year ORDER BY ${OrderArchiveEntity.CREATED} ASC"
+            val simpleSQLiteQuery = SimpleSQLiteQuery(query)
+            val entityList = dao.runtimeQueryList(simpleSQLiteQuery)
+            entityList.map()
+        }
+
+    override fun deleteAll() =
+        dao.deleteAll()
+
+    override fun deleteByMonthAndYear(month: Int, year: Int) = dao.deleteByMonthAndYear(month, year)
+
+}
