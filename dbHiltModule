@@ -1,0 +1,71 @@
+
+import android.content.Context
+import com.google.gson.Gson
+import dagger.Module
+import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import .db.AppDatabase
+import .db.converters.Converters
+import .db.dao.OrderArchiveDAO
+import .db.dao.OrderDAO
+import .db.dao.ResearchDAO
+import .db.dao.ShiftDAO
+import .db.repository.impl.*
+import javax.inject.Named
+import javax.inject.Singleton
+
+@Module
+@InstallIn(SingletonComponent::class)
+object HiltDbRepositoryModule {
+
+    @Provides
+    @Singleton
+    fun provideAppDataBase(
+        @ApplicationContext context: Context,
+        @Named("appGson") gson: Gson
+    ): AppDatabase {
+        Converters.initialize(gson)
+        return AppDatabase.getInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocalRepositoryImpl(db: AppDatabase) = LocalRepositoryImpl(db)
+
+    @Provides
+    @Singleton
+    fun provideAppDataBaseOrderDAO(db: AppDatabase) = db.getOrderDAO()
+
+    @Provides
+    @Singleton
+    fun provideAppDataBaseShiftDAO(db: AppDatabase) = db.getShiftDAO()
+
+    @Provides
+    @Singleton
+    fun provideAppDataBaseResearchDAO(db: AppDatabase) = db.getResearchDAO()
+
+    @Provides
+    @Singleton
+    fun provideAppDataBaseArchiveDAO(db: AppDatabase) = db.getOrderArchiveDAO()
+
+    @Provides
+    @Singleton
+    fun provideOrderLocalRepositoryImpl(dao: OrderDAO) = OrderLocalRepositoryImpl(dao)
+
+    @Provides
+    @Singleton
+    fun provideOrderArchiveLocalRepositoryImpl(orderArchiveDAO: OrderArchiveDAO) =
+        OrderArchiveLocalRepositoryImpl(orderArchiveDAO)
+
+    @Provides
+    @Singleton
+    fun provideShiftLocalRepositoryImpl(shiftDAO: ShiftDAO) =
+        ShiftLocalRepositoryImpl(shiftDAO)
+
+    @Provides
+    @Singleton
+    fun provideResearchLocalRepositoryImpl(researchDAO: ResearchDAO) =
+        ResearchLocalRepositoryImpl(researchDAO)
+}
