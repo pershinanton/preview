@@ -1,0 +1,115 @@
+@InjectViewState
+class ProfilePresenter(applicationContext: Context) : BasePresenter<ProfileView>() {
+
+    @EntryPoint
+    @InstallIn(SingletonComponent::class)
+    interface InitializerEntryPoint {
+        fun sdk(): SDK
+        fun profileCacheGetUseCase(): ProfileCacheGetUseCase
+        fun profileGetUseCase(): ProfileGetUseCase
+        fun authorizationLogoutUseCase(): AuthorizationLogoutUseCase
+        fun authorizationLogoutLocalUseCase(): AuthorizationLogoutLocalUseCase
+
+    }
+
+    val sdk = EntryPoints.get(applicationContext, InitializerEntryPoint::class.java).sdk()
+    val profileCacheGetUseCase =
+        EntryPoints.get(applicationContext, InitializerEntryPoint::class.java)
+            .profileCacheGetUseCase()
+    val profileGetUseCase =
+        EntryPoints.get(applicationContext, InitializerEntryPoint::class.java)
+            .profileGetUseCase()
+    val authorizationLogoutUseCase =
+        EntryPoints.get(applicationContext, InitializerEntryPoint::class.java)
+            .authorizationLogoutUseCase()
+    val authorizationLogoutLocalUseCase =
+        EntryPoints.get(applicationContext, InitializerEntryPoint::class.java)
+            .authorizationLogoutLocalUseCase()
+
+    override fun onFirstViewAttach() {
+        super.onFirstViewAttach()
+        cacheGet()
+    }
+
+    private fun cacheGet() {
+        viewState.setLoading(loading = true, refreshing = false)
+        dispose(ProfileCacheGetUseCase::class.java.name)
+        launchDisposable(ProfileCacheGetUseCase::class.java.name) {
+            profileCacheGetUseCase.invoke()
+                .ioToUi().subscribe({
+                    dispose(ProfileCacheGetUseCase::class.java.name)
+                    viewState.onComplete(it, true)
+                    viewState.setLoading(loading = false, refreshing = false)
+                    get(true)
+                }, {
+                    dispose(ProfileCacheGetUseCase::class.java.name)
+                    if (it is ProfileCacheGetUseCase.Companion.EmptyCache) get(false)
+                })
+        }
+    }
+
+    fun get(refreshing: Boolean) {
+        if (refreshing) viewState.setLoading(loading = false, refreshing = true)
+        dispose(ProfileGetUseCase::class.java.name)
+        launchDisposable(ProfileGetUseCase::class.java.name) {
+            profileGetUseCase.invoke()
+                .ioToUi()
+                .retryWhen(
+                    RetryWithDelayUnlimited(
+                        retryDelayMillis = sdk.getApiWaitTime(),
+                        onRequestRetry = { throwable ->
+                            throwable !is VersionNotSupportedErrorApiException && throwable !is UnauthorizedApiException
+                        }
+                    )
+                )
+                .subscribe({
+                    dispose(ProfileGetUseCase::class.java.name)
+                    viewState.onComplete(it, false)
+                    viewState.setLoading(loading = false, refreshing = false)
+                }, { throwable ->
+                    dispose(ProfileGetUseCase::class.java.name)
+                    if (throwable is VersionNotSupportedErrorApiException) return@subscribe
+                    if (throwable is UnauthorizedApiException) return@subscribe
+                })
+        }
+    }
+
+    fun logout() {
+        if (hasDisposable(AuthorizationLogoutUseCase::class.java.name)) {
+            return
+        }
+        if (hasDisposable(AuthorizationLogoutLocalUseCase::class.java.name)) {
+            return
+        }
+        dispose(AuthorizationLogoutUseCase::class.java.name)
+        launchDisposable(AuthorizationLogoutUseCase::class.java.name) {
+            authorizationLogoutUseCase.invoke()
+                .ioToUi()
+                .subscribe({
+                    dispose(AuthorizationLogoutUseCase::class.java.name)
+                }, {
+                    dispose(AuthorizationLogoutUseCase::class.java.name)
+                    logoutLocal()
+                })
+        }
+    }
+
+    private fun logoutLocal() {
+        if (hasDisposable(AuthorizationLogoutUseCase::class.java.name)) {
+            return
+        }
+        if (hasDisposable(AuthorizationLogoutLocalUseCase::class.java.name)) {
+            return
+        }
+        dispose(AuthorizationLogoutLocalUseCase::class.java.name)
+        launchDisposable(AuthorizationLogoutUseCase::class.java.name) {
+            authorizationLogoutLocalUseCase.invoke()
+                .ioToUi()
+                .subscribe({
+                    dispose(AuthorizationLogoutLocalUseCase::class.java.name)
+                }, {
+                    dispose(AuthorizationLogoutLocalUseCase::class.java.name)
+                })
+        }
+    }
+}
