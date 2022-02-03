@@ -1,0 +1,33 @@
+@Dao
+interface EmpDAO {
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(entity: EmpDBEntity): Long
+
+    @Query("DELETE FROM ${EmpSpecDBEntity.TABLE_NAME}")
+    fun deleteAll()
+
+    @Query(
+        "SELECT ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.ID},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.F_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.L_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.BIRTHDAY},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.AVATAR_URL},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.SPECIALTY}\n" +
+                "FROM ${EmpDBEntity.TABLE_NAME}\n" +
+                "JOIN ${EmpSpecDBEntity.TABLE_NAME}\n" +
+                "ON ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.ID}=${EmpSpecDBEntity.TABLE_NAME}.${EmpSpecDBEntity.USER_ID}\n" +
+                "WHERE ${EmpSpecDBEntity.TABLE_NAME}.${EmpSpecDBEntity.SPECIALITY_ID}=:specialityId"
+    )
+    fun getCurrentEmployees(specialityId: Long): List<EmpDBEntity>?
+    @Query(
+        "SELECT ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.ID},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.F_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.L_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.BIRTHDAY},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.AVATAR_URL},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.SPECIALTY}\n" +
+                "FROM ${EmpDBEntity.TABLE_NAME}\n" +
+                "JOIN ${EmpSpecDBEntity.TABLE_NAME}\n" +
+                "ON ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.ID}=${EmpSpecDBEntity.TABLE_NAME}.${EmpSpecDBEntity.USER_ID}\n" +
+                "WHERE ${EmpSpecDBEntity.TABLE_NAME}.${EmpSpecDBEntity.USER_ID}=:id"
+    )
+    
+    fun getCurrentEmployee(id: Long): EmpDBEntity
+    @Query(
+        "SELECT ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.ID},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.F_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.L_NAME},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.BIRTHDAY},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.AVATAR_URL},${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.SPECIALTY}\n " +
+                "FROM ${EmpDBEntity.TABLE_NAME}\n" +
+                "WHERE  ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.F_NAME} LIKE '%' || :text || '%'  OR ${EmpDBEntity.TABLE_NAME}.${EmpDBEntity.L_NAME} LIKE '%' || :text || '%' "
+    )
+    fun getCurrentEmployeesSearch(text: String): List<EmpDBEntity>?
+}
