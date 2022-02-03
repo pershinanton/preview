@@ -1,0 +1,31 @@
+class EnterPhoneNumberVM : BaseViewModel(EnterPhoneNumberVM::class.java.name) {
+
+    companion object {
+        private const val SEND_CODE = "SEND_CODE"
+    }
+
+    private val authorizationInteractor: AuthorizationInteractor by inject()
+
+    private val _success = SingleEventMutableLiveData<Boolean?>()
+    val success: LiveData<Boolean?>
+        get() = _success
+
+    fun sendCode(phone: String): Boolean {
+        if (jobInProgress(SEND_CODE)) return false
+        launchJob(tag = SEND_CODE) { main: CoroutineContext, background: CoroutineContext ->
+            val result = withContext(background) {
+                authorizationInteractor.sendSmsCode(
+                    phone,
+                    BuildConfig.FLAVOR == "dev",
+                    BuildConfig.VERSION_NAME
+                )
+            }
+            result.error?.let {
+                _apiError.value = it
+            } ?: run {
+                _success.value = true
+            }
+        }
+        return true
+    }
+}
